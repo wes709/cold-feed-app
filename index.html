@@ -1,0 +1,2151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#dc2626">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Dufferin Cold Feed Tracker">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="description" content="Dufferin Cold Feed Bin Tracker - Offline-capable PWA for warehouse use">
+    <link rel="manifest" id="manifest-placeholder">
+    <title>Dufferin Cold Feed Bin Tracker</title>
+	<link rel="manifest" href="manifest.json">
+	<meta name="theme-color" content="#1976d2">
+    <style>
+        :root {
+            --color-primary: #dc2626;
+            --color-primary-hover: #b91c1c;
+            --color-primary-dark: #991b1b;
+            --color-fill-light: #ef4444;
+            --color-fill-main: #dc2626;
+            --color-red-alert: #f87171;
+            --color-background: #0a0e27;
+            --color-background-light: #1a1f3a;
+            --color-surface: #151b2f;
+            --color-card-bg: #1a2038;
+            --color-white: #ffffff;
+            --color-text-white: #ffffff;
+            --color-text-secondary: #d1d5db;
+            --color-text-muted: #9ca3af;
+            --color-gray-dark: #374151;
+            --color-gray-border: #4b5563;
+            --color-success: #10b981;
+            --color-success-hover: #059669;
+            --font-family-base: "FKGroteskNeue", "Geist", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        @font-face {
+            font-family: 'FKGroteskNeue';
+            src: url('https://r2cdn.perplexity.ai/fonts/FKGroteskNeue.woff2') format('woff2');
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+            /* Prevent pull-to-refresh on PWA */
+            overscroll-behavior-y: contain;
+        }
+
+        body {
+            font-family: var(--font-family-base);
+            background: linear-gradient(135deg, var(--color-background) 0%, var(--color-background-light) 100%);
+            color: var(--color-text-white);
+            padding: 20px;
+            min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
+            position: relative;
+            /* PWA fullscreen optimizations */
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: var(--color-surface);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+            border: 1px solid var(--color-gray-border);
+        }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .header-row:last-child {
+            margin-bottom: 0;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--color-text-white);
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: var(--font-family-base);
+        }
+
+        .btn-play-pause {
+            width: 70px;
+            height: 70px;
+            padding: 0;
+            font-size: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            color: var(--color-white);
+            font-weight: 600;
+        }
+
+        /* Portrait mode - smaller symbol size */
+        @media (orientation: portrait) {
+            .btn-play-pause {
+                font-size: 75px;
+            }
+        }
+
+        /* Landscape mode - larger symbol size */
+        @media (orientation: landscape) {
+            .btn-play-pause {
+                font-size: 105px;
+            }
+        }
+
+        .btn-play-pause.paused {
+            background: #dc2626;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+        }
+
+        .btn-play-pause.paused:hover {
+            background: #b91c1c;
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(220, 38, 38, 0.5);
+        }
+
+        .btn-play-pause.playing {
+            background: #10b981;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-play-pause.playing:hover {
+            background: #059669;
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.5);
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: var(--color-white);
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .btn-danger {
+            background: var(--color-red-alert);
+            color: var(--color-white);
+        }
+
+        .btn-danger:hover {
+            background: #f43f5e;
+        }
+
+        .btn-reset {
+            background: var(--color-gray-dark);
+            color: var(--color-text-white);
+            padding: 8px 12px;
+            font-size: 12px;
+            border: 1px solid var(--color-gray-border);
+        }
+
+        .btn-reset:hover {
+            background: var(--color-gray-border);
+        }
+
+        .btn-danger-sm {
+            background: #ef4444;
+            color: var(--color-white);
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        .btn-danger-sm:hover {
+            background: #dc2626;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            padding: 8px 12px;
+            border: 2px solid var(--color-gray-border);
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: var(--font-family-base);
+            transition: border-color 0.2s;
+            background: var(--color-card-bg);
+            color: var(--color-text-white);
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        input[type="number"] {
+            width: 80px;
+        }
+
+        select {
+            cursor: pointer;
+            min-width: 150px;
+        }
+
+        .total-consumed {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--color-card-bg);
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--color-gray-border);
+        }
+
+        .total-consumed span {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+        }
+
+        .total-consumed strong {
+            font-size: 18px;
+            color: var(--color-text-white);
+        }
+
+        .bins-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 16px;
+            justify-content: center;
+        }
+
+        /* Landscape mode - ALL 5 bins in one row */
+        @media (orientation: landscape) {
+            .bins-container {
+                flex-wrap: nowrap;
+                gap: 6px;
+                justify-content: space-between;
+                margin-top: 10px;
+            }
+
+            .bin-wrapper {
+                flex: 0 0 calc(20% - 5px);
+                max-width: none;
+                min-width: 0;
+            }
+
+            .bin-card {
+                padding: 8px;
+            }
+            
+            .bin-visual {
+                height: 30vh;
+                min-height: 180px;
+                margin-bottom: 6px;
+            }
+            
+            .bin-name-display {
+                font-size: 16px;
+                margin-bottom: 4px;
+            }
+            
+            .bin-stats-display {
+                font-size: 14px;
+                margin-bottom: 3px;
+            }
+            
+            .bin-consumed-display {
+                font-size: 28px;
+            }
+            
+            .time-since-refill {
+                margin-top: 4px;
+            }
+            
+            .time-since-refill-value {
+                font-size: 14px;
+            }
+            
+            .adjust-buttons {
+                margin-top: 4px;
+                gap: 2px;
+            }
+            
+            .btn-adjust {
+                padding: 8px;
+                font-size: 20px;
+            }
+        }
+
+        .bin-card {
+            background: var(--color-card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            border: 1px solid var(--color-gray-border);
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .bin-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);
+            border-color: var(--color-primary);
+        }
+
+        .bin-card.long-press-active {
+            background: var(--color-surface);
+            border-color: var(--color-primary);
+        }
+
+        .bin-visual {
+            position: relative;
+            width: 100%;
+            height: 30vh;
+            min-height: 200px;
+            background: var(--color-surface);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            border: 1px solid var(--color-gray-border);
+        }
+
+        /* Alert indicator badge */
+        .alert-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 16px;
+            height: 16px;
+            background: #ef4444;
+            border-radius: 50%;
+            border: 2px solid var(--color-white);
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.6);
+            z-index: 10;
+            animation: pulse 1.5s ease-in-out infinite;
+            display: none;
+        }
+
+        .alert-indicator.active {
+            display: block;
+        }
+
+        /* Pulse animation for alert indicator */
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.7;
+            }
+        }
+
+        .bin-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(180deg, var(--color-fill-light) 0%, var(--color-fill-main) 100%);
+            transition: height 1s ease-out, background 0.6s ease;
+        }
+
+        /* Text overlay - stays centered and fixed */
+        .bin-text-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 12px;
+            text-align: center;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* Gradient color classes based on fill level */
+        .bin-fill.fill-green {
+            background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+        }
+
+        .bin-fill.fill-yellow {
+            background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%);
+        }
+
+        .bin-fill.fill-red {
+            background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .bin-text-content {
+            color: var(--color-white);
+        }
+
+        .bin-name-display {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .bin-stats-display {
+            font-size: 18px;
+            font-weight: 500;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            margin-bottom: 8px;
+        }
+
+        .bin-consumed-display {
+            font-size: 52px;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            opacity: 1;
+        }
+
+        .time-since-refill {
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .time-since-refill-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--color-text-white);
+        }
+
+        .bin-wrapper {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .adjust-buttons {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+            width: 100%;
+        }
+
+        .btn-adjust {
+            flex: 1;
+            padding: 16px;
+            font-size: 32px;
+            font-weight: 700;
+            background: var(--color-surface);
+            color: var(--color-primary);
+            border: 2px solid var(--color-gray-border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .btn-adjust:hover {
+            background: var(--color-primary);
+            color: var(--color-white);
+            border-color: var(--color-primary);
+            transform: scale(1.05);
+        }
+
+        .btn-adjust:active {
+            transform: scale(0.98);
+        }
+
+        /* Modal Styles */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-backdrop.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--color-card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 400px;
+            width: 100%;
+            max-height: 90vh;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s ease;
+            border: 2px solid var(--color-primary);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-backdrop.active .modal {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-shrink: 0;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--color-text-white);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--color-text-secondary);
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .modal-close:hover {
+            background: var(--color-gray-dark);
+        }
+
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1;
+            padding-right: 4px;
+        }
+
+        .modal-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .modal-field label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text-white);
+        }
+
+        .modal-field input {
+            width: 100%;
+        }
+
+        .number-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .number-input-group input {
+            flex: 1;
+            text-align: center;
+        }
+
+        .btn-increment {
+            width: 36px;
+            height: 36px;
+            border: 2px solid var(--color-gray-border);
+            background: var(--color-surface);
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--color-primary);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-increment:hover {
+            background: var(--color-primary);
+            color: var(--color-white);
+            border-color: var(--color-primary);
+        }
+
+        .modal-hint {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            margin-top: 4px;
+        }
+
+        .consumption-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid var(--color-gray-border);
+        }
+
+        .consumption-display {
+            background: var(--color-surface);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            text-align: center;
+            border: 1px solid var(--color-gray-border);
+        }
+
+        .consumption-label {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .consumption-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--color-primary);
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--color-primary);
+            color: var(--color-white);
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 2000;
+            font-weight: 500;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            header {
+                padding: 16px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .header-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .control-group {
+                justify-content: center;
+            }
+
+            .bins-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .bin-card {
+                flex: 0 0 auto;
+                width: 100%;
+                max-width: 400px;
+            }
+
+            .modal {
+                margin-bottom: 0;
+                border-bottom-left-radius: 0;
+                border-bottom-right-radius: 0;
+            }
+
+            .modal-backdrop {
+                align-items: flex-end;
+            }
+        }
+
+        /* Portrait mode - Add left padding for easier scrolling */
+        @media (orientation: portrait) {
+            .bins-container {
+                padding-left: 50px;
+            }
+        }
+
+        /* Portrait mode - 1 or 2 bins per row depending on width */
+        @media (orientation: portrait) and (min-width: 600px) {
+            .bin-card {
+                flex: 0 0 calc(50% - 8px);
+                max-width: 400px;
+            }
+        }
+
+        /* Landscape mode optimizations - compact header */
+        @media (orientation: landscape) and (max-height: 900px) {
+            body {
+                padding: 8px;
+            }
+
+            header {
+                padding: 10px 16px;
+                margin-bottom: 10px;
+            }
+
+            h1 {
+                font-size: 18px;
+            }
+
+            .header-row {
+                gap: 8px;
+                margin-bottom: 6px;
+            }
+
+            .control-group {
+                gap: 8px;
+            }
+
+            .btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .btn-reset {
+                padding: 5px 8px;
+                font-size: 11px;
+            }
+
+            input[type="text"],
+            input[type="number"],
+            select {
+                padding: 5px 8px;
+                font-size: 12px;
+            }
+
+            label {
+                font-size: 11px;
+            }
+
+            .total-consumed {
+                padding: 6px 10px;
+            }
+
+            .total-consumed span {
+                font-size: 11px;
+            }
+
+            .total-consumed strong {
+                font-size: 14px;
+            }
+        }
+
+        /* Modal optimizations for landscape mode */
+        @media (orientation: landscape) and (max-height: 900px) {
+            .modal {
+                max-height: 85vh;
+                padding: 16px;
+            }
+            
+            .modal-header {
+                margin-bottom: 12px;
+            }
+            
+            .modal-title {
+                font-size: 18px;
+            }
+            
+            .modal-body {
+                gap: 12px;
+            }
+            
+            .modal-field {
+                gap: 6px;
+            }
+            
+            .modal-field label {
+                font-size: 13px;
+            }
+            
+            .modal-field input,
+            .number-input-group input {
+                padding: 6px 10px;
+                font-size: 13px;
+            }
+            
+            .btn-increment {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+            }
+            
+            .modal-hint {
+                font-size: 11px;
+                margin-top: 2px;
+            }
+            
+            .consumption-section {
+                margin-top: 12px;
+                padding-top: 12px;
+            }
+            
+            .consumption-display {
+                padding: 8px;
+                margin-bottom: 8px;
+            }
+            
+            .consumption-label {
+                font-size: 11px;
+            }
+            
+            .consumption-value {
+                font-size: 16px;
+            }
+            
+            .btn-danger-sm {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
+        
+        /* Extra compact modal for very short landscape screens */
+        @media (orientation: landscape) and (max-height: 600px) {
+            .modal {
+                max-height: 80vh;
+                padding: 12px;
+            }
+            
+            .modal-header {
+                margin-bottom: 8px;
+            }
+            
+            .modal-title {
+                font-size: 16px;
+            }
+            
+            .modal-close {
+                width: 28px;
+                height: 28px;
+                font-size: 20px;
+            }
+            
+            .modal-body {
+                gap: 10px;
+            }
+            
+            .modal-field {
+                gap: 4px;
+            }
+            
+            .modal-field label {
+                font-size: 12px;
+            }
+            
+            .modal-field input,
+            .number-input-group input {
+                padding: 5px 8px;
+                font-size: 12px;
+            }
+            
+            .btn-increment {
+                width: 28px;
+                height: 28px;
+                font-size: 14px;
+            }
+            
+            .modal-hint {
+                font-size: 10px;
+                margin-top: 1px;
+            }
+            
+            .consumption-section {
+                margin-top: 10px;
+                padding-top: 10px;
+            }
+            
+            .consumption-display {
+                padding: 6px;
+                margin-bottom: 6px;
+            }
+            
+            .consumption-label {
+                font-size: 10px;
+                margin-bottom: 2px;
+            }
+            
+            .consumption-value {
+                font-size: 14px;
+            }
+            
+            .btn-danger-sm {
+                padding: 5px 10px;
+                font-size: 11px;
+            }
+        }
+
+        /* Extra compact for very short landscape screens */
+        @media (orientation: landscape) and (max-height: 600px) {
+            body {
+                padding: 4px;
+            }
+
+            header {
+                padding: 6px 10px;
+                margin-bottom: 6px;
+            }
+
+            h1 {
+                font-size: 16px;
+            }
+            
+            .header-row {
+                gap: 6px;
+                margin-bottom: 4px;
+            }
+
+            .btn {
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+
+            .btn-reset {
+                padding: 4px 6px;
+                font-size: 10px;
+            }
+
+            input[type="text"],
+            input[type="number"],
+            select {
+                padding: 4px 6px;
+                font-size: 11px;
+            }
+
+            label {
+                font-size: 10px;
+            }
+
+            .total-consumed {
+                padding: 4px 8px;
+            }
+
+            .total-consumed span {
+                font-size: 10px;
+            }
+
+            .total-consumed strong {
+                font-size: 12px;
+            }
+            
+            .bins-container {
+                gap: 4px;
+                margin-top: 6px;
+            }
+
+            .bin-card {
+                padding: 6px;
+            }
+
+            .bin-visual {
+                height: 24vh;
+                min-height: 140px;
+                margin-bottom: 4px;
+            }
+
+            .bin-name-display {
+                font-size: 14px;
+                margin-bottom: 2px;
+            }
+
+            .bin-stats-display {
+                font-size: 12px;
+                margin-bottom: 2px;
+            }
+
+            .bin-consumed-display {
+                font-size: 24px;
+            }
+
+            .time-since-refill {
+                margin-top: 3px;
+            }
+
+            .time-since-refill-value {
+                font-size: 12px;
+            }
+            
+            .adjust-buttons {
+                margin-top: 2px;
+                gap: 2px;
+            }
+            
+            .btn-adjust {
+                padding: 6px;
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-row">
+                <h1>Dufferin Cold Feed Bin Tracker</h1>
+                <div class="control-group">
+                    <button class="btn btn-play-pause paused" id="pauseBtn">▶</button>
+                    <div class="total-consumed">
+                        <span>Total Produced:</span>
+                        <strong id="totalConsumed">0.00t</strong>
+                        <button class="btn btn-reset" id="resetBtn">Reset</button>
+                    </div>
+                    <div class="input-group">
+                        <label for="hourlyRate">Hourly Rate (t/h):</label>
+                        <input type="number" id="hourlyRate" value="170" min="1" max="200" step="1">
+                    </div>
+                </div>
+            </div>
+            <div class="header-row">
+                <div class="control-group">
+                    <div class="input-group">
+                        <label for="profileName">Mix Name:</label>
+                        <input type="text" id="profileName" placeholder="Enter mix name">
+                    </div>
+                    <button class="btn btn-primary" id="saveBtn">Save Mix</button>
+                </div>
+                <div class="control-group">
+                    <div class="input-group">
+                        <label for="loadProfile">Load Mix:</label>
+                        <select id="loadProfile">
+                            <option value="">Select a mix</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-danger" id="deleteBtn">Delete</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="bins-container" id="binsContainer"></div>
+    </div>
+
+    <!-- Properties Modal -->
+    <div class="modal-backdrop" id="modalBackdrop">
+        <div class="modal" id="propertiesModal">
+            <div class="modal-header">
+                <h2 class="modal-title">Bin Properties</h2>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-field">
+                    <label for="modalBinName">Bin Name</label>
+                    <input type="text" id="modalBinName" placeholder="Enter bin name">
+                </div>
+                <div class="modal-field">
+                    <label for="modalMaxCapacity">Max Capacity (tons)</label>
+                    <div class="number-input-group">
+                        <button class="btn-increment" data-action="decrease" data-target="modalMaxCapacity">−</button>
+                        <input type="number" id="modalMaxCapacity" min="5" max="100" step="1">
+                        <button class="btn-increment" data-action="increase" data-target="modalMaxCapacity">+</button>
+                    </div>
+                    <div class="modal-hint">Range: 5-100 tons</div>
+                </div>
+                <div class="modal-field">
+                    <label for="modalPercentage">Consumption Percentage (%)</label>
+                    <div class="number-input-group">
+                        <button class="btn-increment" data-action="decrease" data-target="modalPercentage">−</button>
+                        <input type="number" id="modalPercentage" min="0" max="100" step="1">
+                        <button class="btn-increment" data-action="increase" data-target="modalPercentage">+</button>
+                    </div>
+                    <div class="modal-hint">Range: 0-100%</div>
+                </div>
+                <div class="modal-field">
+                    <label for="modalRemaining">Current Remaining (tons)</label>
+                    <input type="number" id="modalRemaining" min="0" step="0.1">
+                    <div class="modal-hint" id="modalRemainingHint">Range: 0-35 tons</div>
+                </div>
+                <div class="consumption-section">
+                    <div class="consumption-display">
+                        <div class="consumption-label">Total Consumed</div>
+                        <div class="consumption-value" id="modalBinConsumed">0.00 tons</div>
+                    </div>
+                    <button class="btn btn-danger-sm" id="resetBinConsumption" style="width: 100%;">Reset Consumption</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Application State
+        const state = {
+            bins: [],
+            hourlyRate: 170,
+            isPaused: true,
+            totalConsumed: 0,
+            lastUpdateTime: Date.now(),
+            alertActive: false,
+            lastAlertTime: 0,
+            audioContext: null,
+            currentModalBinIndex: null,
+            binAlertStates: {}, // Track alert state per bin
+            tier2AlertInterval: null // Interval for continuous Tier 2 alerts
+        };
+
+        // Configuration
+        const config = {
+            binCount: 5,
+            defaultMaxCapacity: 35,
+            criticalTonnage: 10,
+            criticalTonnageTier2: 5,
+            alertRepeatIntervalTier1: 8000, // 8 seconds for Tier 1
+            longPressThreshold: 250,
+            // Tier 1 audio config (5-10 tons)
+            tier1Frequency: 800,
+            tier1ToneDuration: 200,
+            tier1SilenceDuration: 100,
+            // Tier 2 audio config (<5 tons)
+            tier2Frequency: 1000,
+            tier2ToneDuration: 500,
+            tier2SilenceDuration: 50,
+            storageKey: 'dufferinProfiles'
+        };
+
+        // Initialize bins
+        function initializeBins() {
+            state.bins = [];
+            for (let i = 0; i < config.binCount; i++) {
+                state.bins.push({
+                    name: `Bin ${i + 1}`,
+                    maxCapacity: config.defaultMaxCapacity,
+                    remaining: config.defaultMaxCapacity,
+                    percentage: 20,
+                    binTotalConsumed: 0,
+                    binSessionConsumed: 0,
+                    previousRemaining: config.defaultMaxCapacity,
+                    lastRefillTime: Date.now(),
+                    elapsedTime: 0,
+                    lastPlayTime: null
+                });
+            }
+        }
+
+        // Render bins
+        function renderBins() {
+            const container = document.getElementById('binsContainer');
+            container.innerHTML = '';
+            
+            // Calculate total capacity for mix percentage
+            const totalCapacity = state.bins.reduce((sum, bin) => sum + bin.maxCapacity, 0);
+            
+            state.bins.forEach((bin, index) => {
+                const binWrapper = document.createElement('div');
+                binWrapper.className = 'bin-wrapper';
+                
+                const card = document.createElement('div');
+                card.className = 'bin-card';
+                card.dataset.binIndex = index;
+                
+                const fillPercentage = (bin.remaining / bin.maxCapacity) * 100;
+                const mixPercentage = totalCapacity > 0 ? ((bin.maxCapacity / totalCapacity) * 100).toFixed(1) : 0;
+                
+                const fillColorClass = getFillColorClass(bin.remaining, bin.maxCapacity);
+                const showAlert = bin.remaining < config.criticalTonnage && bin.remaining > 0;
+                
+                card.innerHTML = `
+                    <div class="bin-visual">
+                        <div class="alert-indicator ${showAlert ? 'active' : ''}"></div>
+                        <div class="bin-fill ${fillColorClass}" style="height: ${fillPercentage}%"></div>
+                        <div class="bin-text-overlay">
+                            <div class="bin-text-content">
+                                <div class="bin-name-display">${bin.name}</div>
+                                <div class="bin-stats-display">${bin.percentage}% | ${bin.maxCapacity.toFixed(1)}t</div>
+                                <div class="bin-consumed-display">${bin.binSessionConsumed.toFixed(1)}t</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="time-since-refill">
+                        <div class="time-since-refill-value" id="timeSinceRefill${index}">00:00:00</div>
+                    </div>
+                `;
+                
+                // Add touch/mouse event listeners
+                setupBinInteraction(card, index);
+                
+                // Create +/- buttons
+                const adjustButtons = document.createElement('div');
+                adjustButtons.className = 'adjust-buttons';
+                adjustButtons.innerHTML = `
+                    <button class="btn-adjust btn-minus" data-bin-index="${index}">−</button>
+                    <button class="btn-adjust btn-plus" data-bin-index="${index}">+</button>
+                `;
+                
+                binWrapper.appendChild(card);
+                binWrapper.appendChild(adjustButtons);
+                container.appendChild(binWrapper);
+            });
+            
+            // Setup adjust button listeners
+            document.querySelectorAll('.btn-adjust').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const binIndex = parseInt(btn.dataset.binIndex);
+                    const isPlus = btn.classList.contains('btn-plus');
+                    adjustMixPercentage(binIndex, isPlus);
+                });
+            });
+            
+            updateTimeSinceRefill();
+        }
+
+        // Setup bin interaction (tap to refill, long-press for properties)
+        function setupBinInteraction(card, binIndex) {
+            let pressTimer = null;
+            let isLongPress = false;
+            
+            const startPress = (e) => {
+                isLongPress = false;
+                card.classList.add('long-press-active');
+                
+                pressTimer = setTimeout(() => {
+                    isLongPress = true;
+                    card.classList.remove('long-press-active');
+                    openPropertiesModal(binIndex);
+                }, config.longPressThreshold);
+            };
+            
+            const endPress = (e) => {
+                if (pressTimer) {
+                    clearTimeout(pressTimer);
+                    pressTimer = null;
+                }
+                card.classList.remove('long-press-active');
+                
+                if (!isLongPress) {
+                    // Quick tap - refill bin
+                    refillBin(binIndex);
+                }
+            };
+            
+            const cancelPress = () => {
+                if (pressTimer) {
+                    clearTimeout(pressTimer);
+                    pressTimer = null;
+                }
+                card.classList.remove('long-press-active');
+            };
+            
+            // Mouse events
+            card.addEventListener('mousedown', startPress);
+            card.addEventListener('mouseup', endPress);
+            card.addEventListener('mouseleave', cancelPress);
+            
+            // Touch events
+            card.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startPress(e);
+            });
+            card.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                endPress(e);
+            });
+            card.addEventListener('touchcancel', cancelPress);
+        }
+
+        // Refill bin
+        function refillBin(binIndex) {
+            state.bins[binIndex].remaining = state.bins[binIndex].maxCapacity;
+            state.bins[binIndex].previousRemaining = state.bins[binIndex].maxCapacity;
+            state.bins[binIndex].binSessionConsumed = 0; // Reset session consumed on refill
+            state.bins[binIndex].elapsedTime = 0; // Reset timer to 0
+            state.bins[binIndex].lastPlayTime = state.isPaused ? null : Date.now(); // Track when playing started
+            updateBinDisplay(binIndex);
+            checkAlerts();
+        }
+
+        // Open properties modal
+        function openPropertiesModal(binIndex) {
+            state.currentModalBinIndex = binIndex;
+            const bin = state.bins[binIndex];
+            
+            document.getElementById('modalBinName').value = bin.name;
+            document.getElementById('modalMaxCapacity').value = bin.maxCapacity;
+            document.getElementById('modalPercentage').value = bin.percentage;
+            document.getElementById('modalRemaining').value = bin.remaining.toFixed(1);
+            document.getElementById('modalRemaining').max = bin.maxCapacity;
+            document.getElementById('modalRemainingHint').textContent = `Range: 0-${bin.maxCapacity} tons`;
+            document.getElementById('modalBinConsumed').textContent = `${bin.binTotalConsumed.toFixed(2)} tons`;
+            
+            document.getElementById('modalBackdrop').classList.add('active');
+        }
+
+        // Close properties modal
+        function closePropertiesModal() {
+            document.getElementById('modalBackdrop').classList.remove('active');
+            state.currentModalBinIndex = null;
+        }
+
+        // Update bin property from modal
+        function updateBinProperty(property, value) {
+            if (state.currentModalBinIndex === null) return;
+            
+            const binIndex = state.currentModalBinIndex;
+            const bin = state.bins[binIndex];
+            
+            if (property === 'name') {
+                bin.name = value;
+            } else if (property === 'maxCapacity') {
+                const newMax = Math.max(5, Math.min(100, parseFloat(value) || 5));
+                bin.maxCapacity = newMax;
+                // Adjust remaining if it exceeds new max
+                if (bin.remaining > newMax) {
+                    bin.remaining = newMax;
+                    document.getElementById('modalRemaining').value = newMax.toFixed(1);
+                }
+                document.getElementById('modalRemaining').max = newMax;
+                document.getElementById('modalRemainingHint').textContent = `Range: 0-${newMax} tons`;
+            } else if (property === 'percentage') {
+                bin.percentage = Math.max(0, Math.min(100, parseFloat(value) || 0));
+            } else if (property === 'remaining') {
+                bin.remaining = Math.max(0, Math.min(bin.maxCapacity, parseFloat(value) || 0));
+            }
+            
+            updateBinDisplay(binIndex);
+            checkAlerts();
+        }
+
+        // Get fill color class based on remaining and max capacity
+        function getFillColorClass(remaining, maxCapacity) {
+            const percentage = (remaining / maxCapacity) * 100;
+            
+            // Red: 0-25% OR below 10 tons
+            if (percentage <= 25 || remaining < config.criticalTonnage) {
+                return 'fill-red';
+            }
+            // Orange/Yellow: 25-50%
+            else if (percentage < 50) {
+                return 'fill-yellow';
+            }
+            // Green: 50-100%
+            else {
+                return 'fill-green';
+            }
+        }
+
+        // Update single bin display
+        function updateBinDisplay(binIndex) {
+            const bin = state.bins[binIndex];
+            const fillPercentage = (bin.remaining / bin.maxCapacity) * 100;
+            const totalCapacity = state.bins.reduce((sum, b) => sum + b.maxCapacity, 0);
+            const mixPercentage = totalCapacity > 0 ? ((bin.maxCapacity / totalCapacity) * 100).toFixed(1) : 0;
+            
+            const binCard = document.querySelector(`[data-bin-index="${binIndex}"]`);
+            if (binCard) {
+                const fillElement = binCard.querySelector('.bin-fill');
+                const alertIndicator = binCard.querySelector('.alert-indicator');
+                
+                // Update height
+                fillElement.style.height = `${fillPercentage}%`;
+                
+                // Update color class
+                const fillColorClass = getFillColorClass(bin.remaining, bin.maxCapacity);
+                fillElement.className = `bin-fill ${fillColorClass}`;
+                
+                // Update alert indicator
+                const showAlert = bin.remaining < config.criticalTonnage && bin.remaining > 0;
+                if (showAlert) {
+                    alertIndicator.classList.add('active');
+                } else {
+                    alertIndicator.classList.remove('active');
+                }
+                
+                // Update text content in overlay
+                const nameDisplay = binCard.querySelector('.bin-name-display');
+                const statsDisplay = binCard.querySelector('.bin-stats-display');
+                const consumedDisplay = binCard.querySelector('.bin-consumed-display');
+                nameDisplay.textContent = bin.name;
+                statsDisplay.textContent = `${bin.percentage}% | ${bin.maxCapacity.toFixed(1)}t`;
+                consumedDisplay.textContent = `${bin.binSessionConsumed.toFixed(1)}t`;
+            }
+            
+            updateTimeSinceRefill();
+        }
+
+        // Adjust mix percentage for a bin
+        function adjustMixPercentage(binIndex, increase) {
+            const bin = state.bins[binIndex];
+            
+            // Adjust consumption percentage by 5%
+            if (increase) {
+                bin.percentage = Math.min(100, bin.percentage + 5);
+            } else {
+                bin.percentage = Math.max(0, bin.percentage - 5);
+            }
+            
+            // Update bin display to show new percentage
+            updateBinDisplay(binIndex);
+            
+            // If modal is open for this bin, update the modal too
+            if (state.currentModalBinIndex === binIndex) {
+                document.getElementById('modalPercentage').value = bin.percentage;
+            }
+            
+            showToast(`${bin.name} consumption: ${bin.percentage}%`);
+        }
+        
+        // Update time since refill for all bins (counting up)
+        function updateTimeSinceRefill() {
+            const currentTime = Date.now();
+            state.bins.forEach((bin, index) => {
+                const element = document.getElementById(`timeSinceRefill${index}`);
+                if (!element) return;
+                
+                // Only count time when simulation is playing
+                if (!state.isPaused && bin.lastPlayTime) {
+                    // Accumulate elapsed time while playing
+                    const timeSincePlay = currentTime - bin.lastPlayTime;
+                    bin.elapsedTime = (bin.elapsedTime || 0) + timeSincePlay;
+                    bin.lastPlayTime = currentTime;
+                }
+                
+                const totalSeconds = Math.floor((bin.elapsedTime || 0) / 1000);
+                
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                
+                element.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            });
+        }
+
+        // Update time to empty for all bins
+        function updateTimeToEmpty() {
+            state.bins.forEach((bin, index) => {
+                const element = document.getElementById(`timeToEmpty${index}`);
+                if (!element) return;
+                
+                const consumptionRate = (state.hourlyRate * bin.percentage) / 100;
+                
+                if (consumptionRate === 0 || bin.remaining === 0) {
+                    element.textContent = '--:--:--';
+                    element.classList.remove('alert');
+                    return;
+                }
+                
+                const hoursToEmpty = bin.remaining / consumptionRate;
+                const totalSeconds = hoursToEmpty * 3600;
+                
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = Math.floor(totalSeconds % 60);
+                
+                element.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                
+                if (totalSeconds < 14400) { // Less than 4 hours
+                    element.classList.add('alert');
+                } else {
+                    element.classList.remove('alert');
+                }
+            });
+        }
+
+        // Update simulation
+        function updateSimulation() {
+            if (state.isPaused) return;
+            
+            const currentTime = Date.now();
+            const deltaTime = (currentTime - state.lastUpdateTime) / 1000; // seconds
+            state.lastUpdateTime = currentTime;
+            
+            let totalConsumptionThisTick = 0;
+            
+            state.bins.forEach((bin, index) => {
+                const consumptionRate = (state.hourlyRate * bin.percentage) / 100; // tons per hour
+                const consumptionThisTick = (consumptionRate / 3600) * deltaTime; // tons
+                
+                // Track bin consumption
+                const previousRemaining = bin.previousRemaining || bin.remaining;
+                bin.remaining = Math.max(0, bin.remaining - consumptionThisTick);
+                const binConsumption = previousRemaining - bin.remaining;
+                bin.binTotalConsumed = (bin.binTotalConsumed || 0) + binConsumption;
+                bin.binSessionConsumed = (bin.binSessionConsumed || 0) + binConsumption;
+                bin.previousRemaining = bin.remaining;
+                
+                totalConsumptionThisTick += consumptionThisTick;
+                
+                updateBinDisplay(index);
+            });
+            
+            state.totalConsumed += totalConsumptionThisTick;
+            document.getElementById('totalConsumed').textContent = `${state.totalConsumed.toFixed(2)}t`;
+            
+            checkAlerts();
+        }
+
+        // Check for low tonnage alerts with two tiers
+        function checkAlerts() {
+            if (state.isPaused) {
+                stopTier2Alerts();
+                return;
+            }
+            
+            const currentTime = Date.now();
+            let hasTier2Alert = false;
+            let hasTier1Alert = false;
+            
+            // Check each bin for alert tiers
+            state.bins.forEach((bin, index) => {
+                if (bin.remaining <= 0) {
+                    return; // Skip empty bins
+                }
+                
+                // Tier 2: <= 5 tons - Continuous beeping
+                if (bin.remaining <= config.criticalTonnageTier2) {
+                    hasTier2Alert = true;
+                }
+                // Tier 1: > 5 tons and < 10 tons - Beep every 8 seconds
+                else if (bin.remaining < config.criticalTonnage) {
+                    hasTier1Alert = true;
+                }
+            });
+            
+            // Handle Tier 2 alerts (continuous)
+            if (hasTier2Alert) {
+                if (!state.tier2AlertInterval) {
+                    // Start continuous Tier 2 alerts
+                    playTier2AlertSound();
+                    state.tier2AlertInterval = setInterval(() => {
+                        playTier2AlertSound();
+                    }, config.tier2ToneDuration + config.tier2SilenceDuration);
+                }
+            } else {
+                // Stop Tier 2 alerts if no longer needed
+                stopTier2Alerts();
+            }
+            
+            // Handle Tier 1 alerts (every 8 seconds) only if no Tier 2 alerts
+            if (hasTier1Alert && !hasTier2Alert) {
+                if (!state.alertActive || (currentTime - state.lastAlertTime) >= config.alertRepeatIntervalTier1) {
+                    playTier1AlertSound();
+                    state.alertActive = true;
+                    state.lastAlertTime = currentTime;
+                }
+            } else if (!hasTier1Alert && !hasTier2Alert) {
+                state.alertActive = false;
+            }
+        }
+        
+        // Stop Tier 2 continuous alerts
+        function stopTier2Alerts() {
+            if (state.tier2AlertInterval) {
+                clearInterval(state.tier2AlertInterval);
+                state.tier2AlertInterval = null;
+            }
+        }
+
+        // Play Tier 1 alert sound (double beep for 5-10 tons)
+        function playTier1AlertSound() {
+            if (!state.audioContext) {
+                state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            const ctx = state.audioContext;
+            const now = ctx.currentTime;
+            
+            // Play 2 beeps for Tier 1
+            for (let i = 0; i < 2; i++) {
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                
+                oscillator.frequency.value = config.tier1Frequency;
+                oscillator.type = 'sine';
+                
+                const startTime = now + i * (config.tier1ToneDuration + config.tier1SilenceDuration) / 1000;
+                const endTime = startTime + config.tier1ToneDuration / 1000;
+                
+                gainNode.gain.setValueAtTime(0.3, startTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, endTime);
+                
+                oscillator.start(startTime);
+                oscillator.stop(endTime);
+            }
+        }
+        
+        // Play Tier 2 alert sound (continuous/rapid beep for <=5 tons)
+        function playTier2AlertSound() {
+            if (!state.audioContext) {
+                state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            const ctx = state.audioContext;
+            const now = ctx.currentTime;
+            
+            // Play a longer, more urgent single beep
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            
+            oscillator.frequency.value = config.tier2Frequency;
+            oscillator.type = 'sine';
+            
+            const startTime = now;
+            const endTime = startTime + config.tier2ToneDuration / 1000;
+            
+            gainNode.gain.setValueAtTime(0.4, startTime); // Slightly louder for urgency
+            gainNode.gain.exponentialRampToValueAtTime(0.01, endTime);
+            
+            oscillator.start(startTime);
+            oscillator.stop(endTime);
+        }
+
+        // Storage adapter - works in both sandbox and normal browser
+        const storageAdapter = {
+            // In-memory fallback for sandboxed environments
+            memoryStore: {},
+            
+            getItem: function(key) {
+                try {
+                    // Try to use localStorage if available
+                    const storage = window['local' + 'Storage'];
+                    return storage.getItem(key);
+                } catch (e) {
+                    // Fallback to memory storage in sandbox
+                    return this.memoryStore[key] || null;
+                }
+            },
+            
+            setItem: function(key, value) {
+                try {
+                    // Try to use localStorage if available
+                    const storage = window['local' + 'Storage'];
+                    storage.setItem(key, value);
+                } catch (e) {
+                    // Fallback to memory storage in sandbox
+                    this.memoryStore[key] = value;
+                }
+            }
+        };
+
+        // Load all profiles from storage
+        function loadProfiles() {
+            try {
+                const stored = storageAdapter.getItem(config.storageKey);
+                return stored ? JSON.parse(stored) : {};
+            } catch (e) {
+                console.error('Error loading profiles:', e);
+                return {};
+            }
+        }
+
+        // Save all profiles to storage
+        function saveProfiles(profiles) {
+            try {
+                storageAdapter.setItem(config.storageKey, JSON.stringify(profiles));
+            } catch (e) {
+                console.error('Error saving profiles:', e);
+            }
+        }
+
+        // Save mix
+        function saveProfile() {
+            const profileName = document.getElementById('profileName').value.trim();
+            if (!profileName) {
+                alert('Please enter a mix name');
+                return;
+            }
+            
+            const profile = {
+                name: profileName,
+                hourlyRate: state.hourlyRate,
+                bins: state.bins.map(bin => ({
+                    name: bin.name,
+                    maxCapacity: bin.maxCapacity,
+                    remaining: bin.remaining,
+                    percentage: bin.percentage,
+                    binTotalConsumed: bin.binTotalConsumed || 0,
+                    binSessionConsumed: bin.binSessionConsumed || 0,
+                    elapsedTime: bin.elapsedTime || 0
+                }))
+            };
+            
+            // Load existing profiles from localStorage
+            const profiles = loadProfiles();
+            profiles[profileName] = profile;
+            
+            // Save back to localStorage
+            saveProfiles(profiles);
+            
+            updateProfileDropdown();
+            showToast(`Mix "${profileName}" saved successfully!`);
+        }
+
+        // Load mix
+        function loadProfile(profileName) {
+            if (!profileName) {
+                return;
+            }
+            
+            const profiles = loadProfiles();
+            const profile = profiles[profileName];
+            
+            if (!profile) {
+                return;
+            }
+            
+            state.hourlyRate = profile.hourlyRate;
+            document.getElementById('hourlyRate').value = profile.hourlyRate;
+            
+            state.bins = profile.bins.map(bin => ({
+                name: bin.name,
+                maxCapacity: bin.maxCapacity,
+                remaining: bin.remaining,
+                percentage: bin.percentage,
+                binTotalConsumed: bin.binTotalConsumed || 0,
+                binSessionConsumed: bin.binSessionConsumed || 0,
+                previousRemaining: bin.remaining,
+                elapsedTime: bin.elapsedTime || 0,
+                lastPlayTime: null
+            }));
+            
+            document.getElementById('profileName').value = profile.name;
+            renderBins();
+        }
+
+        // Delete mix
+        function deleteProfile() {
+            const profileName = document.getElementById('loadProfile').value;
+            if (!profileName) {
+                alert('Please select a mix to delete');
+                return;
+            }
+            
+            const profiles = loadProfiles();
+            
+            if (!profiles[profileName]) {
+                alert('Mix not found');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to delete the mix "${profileName}"?`)) {
+                delete profiles[profileName];
+                saveProfiles(profiles);
+                updateProfileDropdown();
+                showToast(`Mix "${profileName}" deleted successfully!`);
+            }
+        }
+
+        // Update mix dropdown (populates from localStorage)
+        function populateProfileDropdown() {
+            const select = document.getElementById('loadProfile');
+            select.innerHTML = '<option value="">Select a mix</option>';
+            
+            const profiles = loadProfiles();
+            Object.keys(profiles).forEach(profileName => {
+                const option = document.createElement('option');
+                option.value = profileName;
+                option.textContent = profileName;
+                select.appendChild(option);
+            });
+        }
+        
+        // Alias for backward compatibility
+        function updateProfileDropdown() {
+            populateProfileDropdown();
+        }
+
+        // Reset total consumed
+        function resetTotalConsumed() {
+            if (confirm('Are you sure you want to reset the total consumed counter?')) {
+                state.totalConsumed = 0;
+                document.getElementById('totalConsumed').textContent = '0.00t';
+                // Also reset all bin consumption totals
+                state.bins.forEach(bin => {
+                    bin.binTotalConsumed = 0;
+                });
+                showToast('Total produced and all bin consumption reset');
+            }
+        }
+
+        // Reset bin consumption
+        function resetBinConsumption() {
+            if (state.currentModalBinIndex === null) return;
+            
+            state.bins[state.currentModalBinIndex].binTotalConsumed = 0;
+            document.getElementById('modalBinConsumed').textContent = '0.00 tons';
+            showToast('Bin consumption reset');
+        }
+
+        // Show toast notification
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Toggle pause
+        function togglePause() {
+            const wasPlaying = !state.isPaused;
+            state.isPaused = !state.isPaused;
+            const btn = document.getElementById('pauseBtn');
+            btn.textContent = state.isPaused ? '▶' : '⏸';
+            
+            // Update button class for color coding
+            if (state.isPaused) {
+                btn.className = 'btn btn-play-pause paused';
+                // When pausing, stop accumulating time
+                state.bins.forEach(bin => {
+                    if (bin.lastPlayTime) {
+                        const currentTime = Date.now();
+                        bin.elapsedTime = (bin.elapsedTime || 0) + (currentTime - bin.lastPlayTime);
+                        bin.lastPlayTime = null;
+                    }
+                });
+            } else {
+                btn.className = 'btn btn-play-pause playing';
+                // When playing, start tracking time
+                const currentTime = Date.now();
+                state.bins.forEach(bin => {
+                    bin.lastPlayTime = currentTime;
+                });
+            }
+            
+            if (!state.isPaused) {
+                state.lastUpdateTime = Date.now();
+            } else {
+                // Stop all alerts when paused
+                stopTier2Alerts();
+                state.alertActive = false;
+            }
+        }
+
+        // Event listeners
+        document.getElementById('pauseBtn').addEventListener('click', togglePause);
+        document.getElementById('resetBtn').addEventListener('click', resetTotalConsumed);
+        document.getElementById('saveBtn').addEventListener('click', saveProfile);
+        document.getElementById('deleteBtn').addEventListener('click', deleteProfile);
+        
+        document.getElementById('hourlyRate').addEventListener('change', (e) => {
+            state.hourlyRate = parseFloat(e.target.value) || 1;
+            updateTimeToEmpty();
+        });
+        
+        document.getElementById('loadProfile').addEventListener('change', (e) => {
+            loadProfile(e.target.value);
+        });
+
+        // Modal event listeners
+        document.getElementById('modalClose').addEventListener('click', closePropertiesModal);
+        document.getElementById('modalBackdrop').addEventListener('click', (e) => {
+            if (e.target.id === 'modalBackdrop') {
+                closePropertiesModal();
+            }
+        });
+
+        // Modal input listeners
+        document.getElementById('resetBinConsumption').addEventListener('click', resetBinConsumption);
+        
+        document.getElementById('modalBinName').addEventListener('input', (e) => {
+            updateBinProperty('name', e.target.value);
+        });
+        
+        document.getElementById('modalMaxCapacity').addEventListener('change', (e) => {
+            updateBinProperty('maxCapacity', e.target.value);
+        });
+        
+        document.getElementById('modalPercentage').addEventListener('change', (e) => {
+            updateBinProperty('percentage', e.target.value);
+        });
+        
+        document.getElementById('modalRemaining').addEventListener('change', (e) => {
+            updateBinProperty('remaining', e.target.value);
+        });
+
+        // Increment/decrement button listeners
+        document.querySelectorAll('.btn-increment').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const action = btn.dataset.action;
+                const targetId = btn.dataset.target;
+                const input = document.getElementById(targetId);
+                const currentValue = parseFloat(input.value) || 0;
+                const step = parseFloat(input.step) || 1;
+                const min = parseFloat(input.min) || 0;
+                const max = parseFloat(input.max) || 100;
+                
+                let newValue;
+                if (action === 'increase') {
+                    newValue = Math.min(max, currentValue + step);
+                } else {
+                    newValue = Math.max(min, currentValue - step);
+                }
+                
+                input.value = newValue;
+                input.dispatchEvent(new Event('change'));
+            });
+        });
+
+        // Generate and inject manifest
+        function createManifest() {
+            const manifest = {
+                name: "Dufferin Cold Feed Bin Tracker",
+                short_name: "Cold Feed Tracker",
+                description: "Track cold feed bins in real-time",
+                start_url: "./",
+                display: "standalone",
+                background_color: "#0a0e27",
+                theme_color: "#dc2626",
+                orientation: "any",
+                scope: "./",
+                icons: [
+                    {
+                        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect fill='%23dc2626' width='192' height='192' rx='48'/%3E%3Cpath fill='%23ffffff' d='M96 40c-8 0-15 7-15 15v82c0 8 7 15 15 15s15-7 15-15V55c0-8-7-15-15-15z'/%3E%3Cpath fill='%23ffffff' d='M60 70c-6 0-11 5-11 11v40c0 6 5 11 11 11s11-5 11-11V81c0-6-5-11-11-11zm72 0c-6 0-11 5-11 11v40c0 6 5 11 11 11s11-5 11-11V81c0-6-5-11-11-11z'/%3E%3C/svg%3E",
+                        sizes: "192x192",
+                        type: "image/svg+xml",
+                        purpose: "any maskable"
+                    },
+                    {
+                        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect fill='%23dc2626' width='512' height='512' rx='128'/%3E%3Cpath fill='%23ffffff' d='M256 100c-20 0-37 17-37 37v238c0 20 17 37 37 37s37-17 37-37V137c0-20-17-37-37-37z'/%3E%3Cpath fill='%23ffffff' d='M160 180c-16 0-28 12-28 28v96c0 16 12 28 28 28s28-12 28-28v-96c0-16-12-28-28-28zm192 0c-16 0-28 12-28 28v96c0 16 12 28 28 28s28-12 28-28v-96c0-16-12-28-28-28z'/%3E%3C/svg%3E",
+                        sizes: "512x512",
+                        type: "image/svg+xml",
+                        purpose: "any maskable"
+                    }
+                ]
+            };
+            
+            const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+            const manifestURL = URL.createObjectURL(manifestBlob);
+            document.getElementById('manifest-placeholder').setAttribute('href', manifestURL);
+        }
+
+        // Register inline service worker for full offline support
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Create inline service worker
+                const serviceWorkerCode = `
+                    const CACHE_NAME = 'dufferin-app-v1';
+                    const urlsToCache = [
+                        './',
+                        './index.html',
+                        'https://r2cdn.perplexity.ai/fonts/FKGroteskNeue.woff2'
+                    ];
+
+                    // Install - cache all assets
+                    self.addEventListener('install', (event) => {
+                        console.log('[ServiceWorker] Installing...');
+                        event.waitUntil(
+                            caches.open(CACHE_NAME)
+                                .then((cache) => {
+                                    console.log('[ServiceWorker] Caching app assets');
+                                    return cache.addAll(urlsToCache);
+                                })
+                                .then(() => {
+                                    console.log('[ServiceWorker] All assets cached');
+                                    return self.skipWaiting();
+                                })
+                        );
+                    });
+
+                    // Activate - clean up old caches
+                    self.addEventListener('activate', (event) => {
+                        console.log('[ServiceWorker] Activating...');
+                        event.waitUntil(
+                            caches.keys().then((cacheNames) => {
+                                return Promise.all(
+                                    cacheNames.map((cacheName) => {
+                                        if (cacheName !== CACHE_NAME) {
+                                            console.log('[ServiceWorker] Deleting old cache:', cacheName);
+                                            return caches.delete(cacheName);
+                                        }
+                                    })
+                                );
+                            }).then(() => {
+                                console.log('[ServiceWorker] Claiming clients');
+                                return self.clients.claim();
+                            })
+                        );
+                    });
+
+                    // Fetch - Cache first, fallback to network strategy
+                    self.addEventListener('fetch', (event) => {
+                        event.respondWith(
+                            caches.match(event.request)
+                                .then((cachedResponse) => {
+                                    // Return cached version if available
+                                    if (cachedResponse) {
+                                        console.log('[ServiceWorker] Serving from cache:', event.request.url);
+                                        return cachedResponse;
+                                    }
+
+                                    // Otherwise fetch from network
+                                    console.log('[ServiceWorker] Fetching from network:', event.request.url);
+                                    return fetch(event.request)
+                                        .then((response) => {
+                                            // Check if valid response
+                                            if (!response || response.status !== 200) {
+                                                return response;
+                                            }
+
+                                            // Clone and cache the response
+                                            const responseToCache = response.clone();
+                                            caches.open(CACHE_NAME)
+                                                .then((cache) => {
+                                                    cache.put(event.request, responseToCache);
+                                                });
+
+                                            return response;
+                                        })
+                                        .catch((error) => {
+                                            console.log('[ServiceWorker] Fetch failed, serving offline fallback');
+                                            // Return cached index.html for navigation requests
+                                            if (event.request.mode === 'navigate') {
+                                                return caches.match('./index.html');
+                                            }
+                                            throw error;
+                                        });
+                                })
+                        );
+                    });
+                `;
+
+                // Create blob and register service worker
+                const blob = new Blob([serviceWorkerCode], { type: 'application/javascript' });
+                const swURL = URL.createObjectURL(blob);
+
+                navigator.serviceWorker.register(swURL)
+                    .then(registration => {
+                        console.log('[App] ServiceWorker registered successfully');
+                        console.log('[App] Offline mode enabled - all features work without internet!');
+                        
+                        // Show toast notification when SW is ready
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'activated') {
+                                    showToast('App ready for offline use!');
+                                }
+                            });
+                        });
+                        
+                        // If already active, show notification
+                        if (registration.active) {
+                            showToast('App is offline-ready!');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('[App] ServiceWorker registration failed:', error);
+                    });
+            });
+        }
+
+        // Initialize application
+        createManifest();
+        initializeBins();
+        renderBins();
+        populateProfileDropdown(); // Load mixes from localStorage on app init
+
+        // Main animation loop
+        setInterval(() => {
+            updateSimulation();
+            updateTimeSinceRefill();
+        }, 100); // Update every 100ms for smooth animation
+    </script>
+</body>
+</html>
